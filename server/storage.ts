@@ -1,3 +1,12 @@
+/**
+ * Storage Implementation
+ * 
+ * @author Mikiyas Birhanu
+ * @description This module provides a storage interface and implementation for 
+ * user management and authentication. It implements an in-memory storage solution
+ * that can be replaced with a database adapter while maintaining the same interface.
+ */
+
 import { 
   users, 
   refreshTokens, 
@@ -33,6 +42,13 @@ export interface IStorage {
   sessionStore: any; // Use any type to resolve the SessionStore type issue
 }
 
+/**
+ * In-Memory Storage Implementation
+ * 
+ * This class provides a non-persistent storage implementation using JavaScript Maps.
+ * It's ideal for development and testing but should be replaced with a database
+ * implementation for production use.
+ */
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private tokens: Map<string, RefreshToken>;

@@ -1,3 +1,12 @@
+/**
+ * Protected Route Component
+ * 
+ * @author Mikiyas Birhanu
+ * @description This component protects routes that require authentication.
+ * It redirects unauthenticated users to the login page and shows a loading
+ * indicator while checking authentication status.
+ */
+
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";

@@ -1,3 +1,11 @@
+/**
+ * API Routes Configuration
+ * 
+ * @author Mikiyas Birhanu
+ * @description This module defines all API endpoints and their handlers.
+ * It sets up RESTful routes for user management and authentication.
+ */
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -9,6 +17,18 @@ import { setupAuth } from "./auth";
 // Initialize Prisma client
 const prisma = new PrismaClient();
 
+/**
+ * Register all API routes and middleware
+ * 
+ * This function configures:
+ * 1. Authentication routes and middleware via setupAuth()
+ * 2. Health check endpoint
+ * 3. CRUD operations for users resource
+ * 4. Error handling for all endpoints
+ * 
+ * @param app - Express application instance
+ * @returns HTTP server instance
+ */
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);

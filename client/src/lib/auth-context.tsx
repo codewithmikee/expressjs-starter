@@ -1,20 +1,33 @@
+/**
+ * Authentication Context Provider
+ * 
+ * @author Mikiyas Birhanu
+ * @description This module provides authentication state management for the application.
+ * It implements React Context API with TanStack Query for data fetching and mutations.
+ */
+
 import { createContext, ReactNode } from "react";
 import {
   useQuery,
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { LoginCredentials, User } from "@shared/schema";
+import { LoginCredentials, User, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "./queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+/**
+ * Authentication Context Type
+ * 
+ * Contains the user state and mutation functions for authentication operations
+ */
 export type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: UseMutationResult<any, Error, LoginCredentials>;
-  logoutMutation: UseMutationResult<any, Error, { refreshToken?: string }>;
-  registerMutation: UseMutationResult<any, Error, any>;
+  logoutMutation: UseMutationResult<any, Error, any>;
+  registerMutation: UseMutationResult<any, Error, InsertUser>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -56,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (userData: any) => {
+    mutationFn: async (userData: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", userData);
       return await res.json();
     },
@@ -78,8 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: async (data: { refreshToken?: string }) => {
-      await apiRequest("POST", "/api/logout", data);
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);

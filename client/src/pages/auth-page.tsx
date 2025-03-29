@@ -1,3 +1,13 @@
+/**
+ * Authentication Page
+ * 
+ * @author Mikiyas Birhanu
+ * @description This page provides login and registration functionality.
+ * It includes a two-column layout with a form on the left and a hero section
+ * on the right. The page automatically redirects authenticated users to the
+ * home page.
+ */
+
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { z } from "zod";

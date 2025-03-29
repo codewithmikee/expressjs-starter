@@ -1,3 +1,12 @@
+/**
+ * Authentication Module
+ * 
+ * @author Mikiyas Birhanu
+ * @description This module handles all authentication-related functionality including
+ * user registration, login, session management, and password security.
+ * The module provides a secure way to handle user credentials and manage sessions.
+ */
+
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
@@ -74,6 +83,14 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 
 /**
  * Sets up authentication middleware and routes
+ * 
+ * This function configures:
+ * 1. Session management with persistent storage
+ * 2. Passport strategy for local authentication
+ * 3. User serialization/deserialization
+ * 4. API endpoints for registration, login, logout, and user profile
+ * 
+ * @param app - Express application instance
  */
 export function setupAuth(app: Express): void {
   const sessionSettings: session.SessionOptions = {

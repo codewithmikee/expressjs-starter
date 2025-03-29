@@ -1,3 +1,12 @@
+/**
+ * Database Schema and Types
+ * 
+ * @author Mikiyas Birhanu
+ * @description This module defines the database schema, validation schemas,
+ * and exported TypeScript types used throughout the application.
+ * The schema is shared between frontend and backend to ensure type consistency.
+ */
+
 import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -19,7 +28,12 @@ export const UserRole = {
 
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 
-// User table
+/**
+ * User Table Schema
+ * 
+ * Stores user account information including credentials, role, and status.
+ * Contains fields for password reset and email verification functionality.
+ */
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -35,7 +49,13 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// Refresh token table
+/**
+ * Refresh Token Table Schema
+ * 
+ * Stores tokens used for refreshing authentication sessions.
+ * Linked to users table with cascade delete for automatic cleanup.
+ * Includes expiration time for security.
+ */
 export const refreshTokens = pgTable("refresh_tokens", {
   id: serial("id").primaryKey(),
   token: text("token").notNull().unique(),
@@ -45,7 +65,14 @@ export const refreshTokens = pgTable("refresh_tokens", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// Base user schema for registration
+/**
+ * User Registration/Creation Schema
+ * 
+ * Defines validation rules for user registration and creation:
+ * - Username: 3-50 characters, required
+ * - Email: Valid email format, optional
+ * - Password: 8-100 characters, required
+ */
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
@@ -86,7 +113,13 @@ export const tokenResponseSchema = z.object({
   expiresIn: z.number(),
 });
 
-// Export types
+/**
+ * Exported TypeScript Types
+ * 
+ * These types are derived from the schemas and used throughout the application.
+ * They ensure type safety and consistency between frontend and backend.
+ * The types are used for validation, API requests/responses, and database operations.
+ */
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type LoginCredentials = z.infer<typeof loginSchema>;
