@@ -9,28 +9,14 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { IUserModel, IRefreshTokenModel } from "../models/user.model";
 
 const MemoryStore = createMemoryStore(session);
 
 // Storage interface with CRUD methods for users and authentication
-export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUsers(): Promise<User[]>;
-  createUser(user: InsertUser & { status?: string; role?: string }): Promise<User>;
-  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
-  updateUserStatus(id: number, status: string): Promise<User | undefined>;
-  deleteUser(id: number): Promise<void>;
-  
-  // RefreshToken methods
-  createRefreshToken(userId: number, token: string, expiresIn: number): Promise<RefreshToken>;
-  getRefreshToken(token: string): Promise<RefreshToken | undefined>;
-  deleteRefreshToken(token: string): Promise<void>;
-  deleteUserRefreshTokens(userId: number): Promise<void>;
-  
+export interface IStorage extends IUserModel, IRefreshTokenModel {
   // Session store
-  sessionStore: any; // Use any type to resolve the SessionStore type issue
+  sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
@@ -38,7 +24,7 @@ export class MemStorage implements IStorage {
   private tokens: Map<string, RefreshToken>;
   currentId: number;
   tokenId: number;
-  sessionStore: any; // Use any type to resolve the SessionStore type issue
+  sessionStore: session.Store;
 
   constructor() {
     this.users = new Map();
@@ -175,4 +161,5 @@ export class MemStorage implements IStorage {
   }
 }
 
+// Export a singleton instance
 export const storage = new MemStorage();
