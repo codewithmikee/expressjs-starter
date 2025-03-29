@@ -6,6 +6,7 @@ import { setupPassport } from "./middleware/auth.middleware";
 import { log } from "./utils/logger";
 import { setupVite, serveStatic } from "./utils/vite";
 import config from "./config";
+import { errorHandlerMiddleware, notFoundMiddleware } from "../../packages/error-formatter/src";
 
 export async function createApp(): Promise<{ app: express.Express, server: Server }> {
   const app = express();
@@ -53,14 +54,11 @@ export async function createApp(): Promise<{ app: express.Express, server: Serve
   // Create HTTP server
   const server = createServer(app);
 
-  // Global error handler
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    log(`Error: ${message}`, "error");
-    res.status(status).json({ message });
-  });
+  // Global error handling middleware from error-formatter package
+  app.use(errorHandlerMiddleware);
+  
+  // 404 handler for routes not found
+  app.use(notFoundMiddleware);
 
   // Setup client-side application (Vite in development, static files in production)
   if (config.env.isDevelopment) {
