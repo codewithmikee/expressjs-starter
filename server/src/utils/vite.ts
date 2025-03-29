@@ -22,6 +22,8 @@ export async function setupVite(app: Express, server: Server) {
       },
       cors: true,
       origin: '*',
+      // Fix for Replit environment
+      allowedHosts: true,
     },
     appType: "custom",
     preview: {

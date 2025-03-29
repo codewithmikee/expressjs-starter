@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "../services/storage.service";
 import { User, UserStatus, UserRole } from "@shared/schema";
+import config from "../config";
 
 declare global {
   namespace Express {
@@ -102,13 +103,13 @@ export function isAdmin(req: Request, res: Response, next: NextFunction) {
  */
 export function setupPassport(app: Express): void {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "default-secret-for-development-only",
+    secret: config.auth.sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: config.auth.sessionMaxAge,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: config.env.isProduction,
       sameSite: "lax",
     },
     store: storage.sessionStore
