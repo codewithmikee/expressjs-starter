@@ -1,0 +1,348 @@
+Generate Express + TypeScript + Prisma (SQLite or any database you can connect for test) Monorepo Setup called code-with-mike-backend
+
+This guide helps you create a fresh backend project on Replit (or locally). We assume:
+	1.	You have pnpm available (Replit usually supports it).
+	2.	You’re comfortable running commands in the Replit Shell.
+	3.	You want a structure that includes:
+	•	An Express server in /src
+	•	A shareable packages/ folder for features
+	•	Prisma with SQLite for easy DB usage on Replit
+	•	TypeScript with strict mode
+
+⸻
+
+Table of Contents
+	1.	Phase 0: Base Project Initialization
+	2.	Phase 1: Minimal Express + TS Setup
+	3.	Phase 2: Prisma + SQLite Integration
+	4.	Phase 3: Packages Folder (Shared Features)
+	5.	What’s Next?
+	6.	Running & Testing
+
+⸻
+
+Phase 0: Base Project Initialization
+	1.	Create or open your Replit project (blank Replit or Node.js template).
+	2.	In the Replit Shell, ensure you have a package.json:
+
+pnpm init -y
+
+
+	3.	Make a .gitignore (if you’re using Git, you’ll want to ignore certain files):
+
+echo "node_modules\ndist\n.env" > .gitignore
+
+
+	4.	Create core folders:
+
+mkdir -p src
+mkdir -p packages
+mkdir -p scripts
+
+
+
+After Phase 0, you have a minimal structure:
+
+.
+├── package.json
+├── .gitignore
+├── src/
+├── packages/
+└── scripts/
+
+
+
+⸻
+
+Phase 1: Minimal Express + TS Setup
+
+1. Install Dependencies
+
+pnpm add express
+pnpm add -D typescript ts-node-dev @types/express
+
+2. Create tsconfig.json
+
+cat << 'EOF' > tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "lib": ["ESNext"],
+    "strict": true,
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
+EOF
+
+This sets strict TypeScript checks and compiles output to dist/.
+
+3. Create a Basic Express Server
+
+cat << 'EOF' > src/server.ts
+import express from "express";
+
+const app = express();
+app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("Hello from Express.js + TypeScript!");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+EOF
+
+4. Add Scripts to package.json
+
+npx json -I -f package.json -e '
+  this.scripts = Object.assign({}, this.scripts, {
+    "dev": "ts-node-dev --respawn src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  })
+'
+
+Now your package.json has:
+
+{
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  }
+}
+
+At this point, Phase 1 is complete. You can test with:
+
+pnpm dev
+
+Then open the web preview on Replit. You should see "Hello from Express.js + TypeScript!".
+
+⸻
+
+Phase 2: Prisma + SQLite Integration
+
+1. Install Prisma & Client
+
+pnpm add -D prisma
+pnpm add @prisma/client
+
+2. Initialize Prisma
+
+npx prisma init --url="file:./dev.db"
+
+This creates a /prisma folder with a schema.prisma and updates your .env.
+
+3. Update prisma/schema.prisma
+
+Replace the default content with something like:
+
+cat << 'EOF' > prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String?
+}
+EOF
+
+4. Adjust .env for SQLite
+
+echo "DATABASE_URL=\"file:./dev.db\"" > .env
+
+5. Run Prisma Migration
+
+pnpm prisma migrate dev --name init
+
+This creates your dev.db file locally. On Replit, that means your DB is ephemeral but should persist for the session.
+
+6. Demonstrate Prisma in server.ts
+
+Add a new route for creating a user:
+
+cat << 'EOF' >> src/server.ts
+
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+// Example route: Create a user
+app.post("/user", async (req, res) => {
+  const { email, name } = req.body;
+  try {
+    const newUser = await prisma.user.create({ data: { email, name } });
+    res.json(newUser);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+EOF
+
+Now you can pnpm dev, then send a POST request to /user with {"email": "test@example.com", "name": "Test User"} to see it create a row in your SQLite DB.
+
+⸻
+
+Phase 3: Packages Folder (Shared Features)
+
+Let’s demonstrate a shareable utility package:
+
+1. Create a utils Package
+
+mkdir -p packages/utils/src
+
+Create a package.json for it:
+
+cat << 'EOF' > packages/utils/package.json
+{
+  "name": "@workspace/utils",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  }
+}
+EOF
+
+2. Add a TS Config for the Package
+
+cat << 'EOF' > packages/utils/tsconfig.json
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"]
+}
+EOF
+
+3. Create a Sample Utility Function
+
+cat << 'EOF' > packages/utils/src/index.ts
+export function greet(name: string): string {
+  return `Hello, ${name}! This is a shared utility.`;
+}
+EOF
+
+4. (Optional) pnpm-workspace.yaml
+
+If you don’t have it yet:
+
+cat << 'EOF' > pnpm-workspace.yaml
+packages:
+  - "packages/*"
+  - "src"
+EOF
+
+If it already exists, ensure it has   - "packages/*" inside packages:.
+
+5. Use the Utility in server.ts
+
+Append a route:
+
+cat << 'EOF' >> src/server.ts
+
+// Demo usage from @workspace/utils
+import { greet } from "@workspace/utils";
+
+app.get("/demo-utils", (req, res) => {
+  const message = greet("Developer");
+  res.json({ message });
+});
+EOF
+
+Now if you run:
+
+pnpm dev
+
+and open /demo-utils, you should see something like {"message":"Hello, Developer! This is a shared utility."}
+
+⸻
+
+What’s Next?
+	•	Add linting & code formatting (ESLint, Prettier)
+	•	Add authentication (JWT or session-based)
+	•	Add rate limiting (express-rate-limit) for production
+	•	Potentially Dockerize if you want a consistent dev environment
+	•	If you plan to share @workspace/utils publicly, you can publish it to a registry or keep it private
+
+⸻
+
+Running & Testing
+	1.	Development
+
+pnpm dev
+
+Replit should show “Server running on port 3000”. Open the web view.
+
+	2.	Build
+
+pnpm build
+
+Compiles TypeScript to dist/.
+
+	3.	Start (Production)
+
+pnpm start
+
+Uses Node to run dist/server.js.
+
+	4.	Migrate
+
+pnpm prisma migrate dev
+
+Creates or updates your SQLite schema.
+
+	5.	Util Package Build (optional if you rely on direct TypeScript references)
+
+pnpm --filter @workspace/utils build
+
+
+
+⸻
+
+Project Structure After These Phases
+
+.
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml        # If you created it
+├── tsconfig.json
+├── .env
+├── .gitignore
+├── prisma/
+│   └── schema.prisma
+├── dev.db                     # SQLite DB file
+├── src/
+│   └── server.ts
+├── packages/
+│   └── utils/
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── src/
+│           └── index.ts
+|-- shared/
+|       |__types/ consider this for feature shared types between fronteds
+└── scripts/
+ 
+
+
+ # NOTE: 
+ - You can refer to latest documentation and best implementations for any of folder structure, commands or implementations or configurations
+ - On each phase complete commit changes (need to initialize git on start)
