@@ -4,11 +4,14 @@ import { storage } from "./storage";
 import { PrismaClient } from '@prisma/client';
 import { z } from "zod";
 import { insertUserSchema } from "@shared/schema";
+import { setupAuth } from "./auth";
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
   // API health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
