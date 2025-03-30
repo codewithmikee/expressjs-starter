@@ -2,13 +2,10 @@
  * Database Schema and Types
  * 
  * @author Mikiyas Birhanu
- * @description This module defines the database schema, validation schemas,
- * and exported TypeScript types used throughout the application.
- * The schema is shared between frontend and backend to ensure type consistency.
+ * @description This module defines validation schemas and exported 
+ * TypeScript types that match the Prisma schema. This ensures type consistency
+ * between frontend and backend.
  */
-
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // User status enum
@@ -29,41 +26,38 @@ export const UserRole = {
 export type UserRole = typeof UserRole[keyof typeof UserRole];
 
 /**
- * User Table Schema
+ * User Type Definition
  * 
- * Stores user account information including credentials, role, and status.
- * Contains fields for password reset and email verification functionality.
+ * This type matches the Prisma User model
  */
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email").unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default(UserRole.USER),
-  status: text("status").notNull().default(UserStatus.ACTIVE),
-  emailVerified: boolean("email_verified").notNull().default(false),
-  emailVerifyToken: text("email_verify_token"),
-  passwordResetToken: text("password_reset_token"),
-  passwordResetExpiry: timestamp("password_reset_expiry"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export type User = {
+  id: number;
+  username: string;
+  email: string | null;
+  password: string;
+  role: string;
+  status: string;
+  emailVerified: boolean;
+  emailVerifyToken: string | null;
+  passwordResetToken: string | null;
+  passwordResetExpiry: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 /**
- * Refresh Token Table Schema
+ * RefreshToken Type Definition
  * 
- * Stores tokens used for refreshing authentication sessions.
- * Linked to users table with cascade delete for automatic cleanup.
- * Includes expiration time for security.
+ * This type matches the Prisma RefreshToken model
  */
-export const refreshTokens = pgTable("refresh_tokens", {
-  id: serial("id").primaryKey(),
-  token: text("token").notNull().unique(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export type RefreshToken = {
+  id: number;
+  token: string;
+  userId: number;
+  expires: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 /**
  * User Registration/Creation Schema
@@ -73,14 +67,9 @@ export const refreshTokens = pgTable("refresh_tokens", {
  * - Email: Valid email format, optional
  * - Password: 8-100 characters, required
  */
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  email: true,
-  password: true,
-}).extend({
-  // Add validation rules
+export const insertUserSchema = z.object({
   username: z.string().min(3).max(50),
-  email: z.string().email().optional(),
+  email: z.string().email().optional().nullable(),
   password: z.string().min(8).max(100),
 });
 
@@ -121,10 +110,8 @@ export const tokenResponseSchema = z.object({
  * The types are used for validation, API requests/responses, and database operations.
  */
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type PasswordResetRequest = z.infer<typeof passwordResetRequestSchema>;
 export type PasswordReset = z.infer<typeof passwordResetSchema>;
 export type UpdateUserStatus = z.infer<typeof updateUserStatusSchema>;
 export type TokenResponse = z.infer<typeof tokenResponseSchema>;
-export type RefreshToken = typeof refreshTokens.$inferSelect;

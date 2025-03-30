@@ -1,6 +1,4 @@
 import { 
-  users, 
-  refreshTokens, 
   type User, 
   type InsertUser, 
   type RefreshToken,
@@ -8,10 +6,12 @@ import {
   UserRole
 } from "@shared/schema";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
 import { IUserModel, IRefreshTokenModel } from "../models/user.model";
+import { prisma } from "./db.service";
 
-const MemoryStore = createMemoryStore(session);
+// Create PostgreSQL session store
+const PostgresSessionStore = connectPg(session);
 
 // Storage interface with CRUD methods for users and authentication
 export interface IStorage extends IUserModel, IRefreshTokenModel {
@@ -19,45 +19,71 @@ export interface IStorage extends IUserModel, IRefreshTokenModel {
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tokens: Map<string, RefreshToken>;
-  currentId: number;
-  tokenId: number;
+export class PrismaStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.tokens = new Map();
-    this.currentId = 1;
-    this.tokenId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+    this.sessionStore = new PostgresSessionStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true
     });
     
-    // Add a default admin user for testing
-    this.createUser({
-      username: "admin",
-      password: "$2a$12$o2.RN5V66LGDWZfzj/RB.etT9h7M/q7zi6GccdYd6Q6YzU.m1zJJu", // password: admin123
-      email: "admin@example.com",
-      role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE,
-      emailVerified: true
-    });
+    // Try to add a default admin user for initial setup
+    this.ensureAdminUserExists();
+  }
+
+  private async ensureAdminUserExists() {
+    try {
+      // Check if we have any users
+      const userCount = await prisma.user.count();
+      
+      if (userCount === 0) {
+        // Create a default admin user if no users exist
+        await this.createUser({
+          username: "admin",
+          password: "$2a$12$o2.RN5V66LGDWZfzj/RB.etT9h7M/q7zi6GccdYd6Q6YzU.m1zJJu", // password: admin123
+          email: "admin@example.com",
+          role: UserRole.ADMIN,
+          status: UserStatus.ACTIVE,
+          emailVerified: true
+        });
+      }
+    } catch (error) {
+      console.error("Failed to create admin user:", error);
+    }
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    try {
+      const user = await prisma.user.findUnique({ 
+        where: { id }
+      });
+      return user || undefined;
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    try {
+      const user = await prisma.user.findUnique({ 
+        where: { username }
+      });
+      return user || undefined;
+    } catch (error) {
+      console.error("Error fetching user by username:", error);
+      return undefined;
+    }
   }
 
   async getUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    try {
+      return await prisma.user.findMany();
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return [];
+    }
   }
 
   async createUser(userData: InsertUser & { 
@@ -65,101 +91,109 @@ export class MemStorage implements IStorage {
     role?: string;
     emailVerified?: boolean;
   }): Promise<User> {
-    const id = this.currentId++;
-    
-    // Set default values for new users
-    const user: User = {
-      id,
-      username: userData.username,
-      email: userData.email || null,
-      password: userData.password,
-      role: userData.role || UserRole.USER,
-      status: userData.status || UserStatus.ACTIVE,
-      emailVerified: userData.emailVerified || false,
-      emailVerifyToken: null,
-      passwordResetToken: null,
-      passwordResetExpiry: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    this.users.set(id, user);
-    return user;
+    try {
+      return await prisma.user.create({
+        data: {
+          username: userData.username,
+          email: userData.email || null,
+          password: userData.password,
+          role: userData.role || UserRole.USER,
+          status: userData.status || UserStatus.ACTIVE,
+          emailVerified: userData.emailVerified || false,
+          emailVerifyToken: null,
+          passwordResetToken: null,
+          passwordResetExpiry: null
+        }
+      });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
   }
 
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
-    const user = await this.getUser(id);
-    if (!user) {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: userData
+      });
+    } catch (error) {
+      console.error("Error updating user:", error);
       return undefined;
     }
-
-    const updatedUser: User = {
-      ...user,
-      ...userData,
-      updatedAt: new Date()
-    };
-
-    this.users.set(id, updatedUser);
-    return updatedUser;
   }
 
   async updateUserStatus(id: number, status: string): Promise<User | undefined> {
-    const user = await this.getUser(id);
-    if (!user) {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: { status }
+      });
+    } catch (error) {
+      console.error("Error updating user status:", error);
       return undefined;
     }
-
-    const updatedUser: User = {
-      ...user,
-      status,
-      updatedAt: new Date()
-    };
-
-    this.users.set(id, updatedUser);
-    return updatedUser;
   }
 
   async deleteUser(id: number): Promise<void> {
-    this.users.delete(id);
-    // Also delete all refresh tokens for this user
-    await this.deleteUserRefreshTokens(id);
+    try {
+      await prisma.user.delete({ where: { id } });
+      // Refresh tokens will be automatically deleted due to cascade delete
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
   }
 
   async createRefreshToken(userId: number, token: string, expiresIn: number): Promise<RefreshToken> {
-    const id = this.tokenId++;
-    const expiresDate = new Date();
-    expiresDate.setSeconds(expiresDate.getSeconds() + expiresIn);
-    
-    const refreshToken: RefreshToken = {
-      id,
-      token,
-      userId,
-      expires: expiresDate,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    this.tokens.set(token, refreshToken);
-    return refreshToken;
+    try {
+      const expiresDate = new Date();
+      expiresDate.setSeconds(expiresDate.getSeconds() + expiresIn);
+      
+      return await prisma.refreshToken.create({
+        data: {
+          token,
+          userId,
+          expires: expiresDate
+        }
+      });
+    } catch (error) {
+      console.error("Error creating refresh token:", error);
+      throw error;
+    }
   }
 
   async getRefreshToken(token: string): Promise<RefreshToken | undefined> {
-    return this.tokens.get(token);
+    try {
+      const refreshToken = await prisma.refreshToken.findUnique({
+        where: { token }
+      });
+      return refreshToken || undefined;
+    } catch (error) {
+      console.error("Error getting refresh token:", error);
+      return undefined;
+    }
   }
 
   async deleteRefreshToken(token: string): Promise<void> {
-    this.tokens.delete(token);
+    try {
+      await prisma.refreshToken.delete({
+        where: { token }
+      });
+    } catch (error) {
+      console.error("Error deleting refresh token:", error);
+    }
   }
 
   async deleteUserRefreshTokens(userId: number): Promise<void> {
-    // Use Array.from to convert map entries to array to avoid downlevelIteration issues
-    Array.from(this.tokens.entries()).forEach(([token, refreshToken]) => {
-      if (refreshToken.userId === userId) {
-        this.tokens.delete(token);
-      }
-    });
+    try {
+      await prisma.refreshToken.deleteMany({
+        where: { userId }
+      });
+    } catch (error) {
+      console.error("Error deleting user refresh tokens:", error);
+    }
   }
 }
 
 // Export a singleton instance
-export const storage = new MemStorage();
+export const storage = new PrismaStorage();

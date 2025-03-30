@@ -9,7 +9,7 @@ export interface IUserModel {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUsers(): Promise<User[]>;
-  createUser(user: InsertUser & { status?: string; role?: string }): Promise<User>;
+  createUser(user: InsertUser & { status?: string; role?: string; emailVerified?: boolean }): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
   updateUserStatus(id: number, status: string): Promise<User | undefined>;
   deleteUser(id: number): Promise<void>;
