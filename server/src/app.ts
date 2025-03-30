@@ -57,15 +57,15 @@ export async function createApp(): Promise<{ app: express.Express, server: Serve
   // Global error handling middleware from error-formatter package
   app.use(errorHandlerMiddleware);
   
-  // 404 handler for routes not found
-  app.use(notFoundMiddleware);
-
   // Setup client-side application (Vite in development, static files in production)
   if (config.env.isDevelopment) {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+  
+  // 404 handler for routes not found (should be last)
+  app.use(notFoundMiddleware);
 
   return { app, server };
 }
