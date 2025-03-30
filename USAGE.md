@@ -57,7 +57,7 @@ The project follows a monorepo structure:
 ### Prerequisites
 
 - Node.js (v14+)
-- npm or yarn
+- pnpm (preferred), npm, or yarn
 - PostgreSQL database
 
 ### Installation
@@ -65,7 +65,7 @@ The project follows a monorepo structure:
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 3. Set up environment variables:
    - Create a `.env` file in the root directory
@@ -80,7 +80,7 @@ The project follows a monorepo structure:
 Start the development server:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 This will start both the backend Express server and the frontend React application.
@@ -229,17 +229,17 @@ To create and apply migrations:
 1. Make changes to `prisma/schema.prisma`
 2. Generate migration files:
    ```bash
-   npx prisma migrate dev --name description_of_changes
+   pnpm prisma migrate dev --name description_of_changes
    ```
 3. Apply migrations:
    ```bash
-   npx prisma migrate deploy
+   pnpm prisma migrate deploy
    ```
 
 Or use the shortcut:
 
 ```bash
-npm run db:push
+pnpm run db:push
 ```
 
 ### Using Prisma Client
@@ -328,7 +328,7 @@ The API follows RESTful conventions:
    - Check that your session store is properly configured
 
 3. **Type Errors**
-   - Run `npm run build` to check for TypeScript errors
+   - Run `pnpm run build` to check for TypeScript errors
    - Check that your shared types are properly exported
 
 ### Debugging
@@ -337,7 +337,7 @@ The API follows RESTful conventions:
 - Check browser console for client-side issues
 - For database issues, use Prisma Studio:
   ```bash
-  npx prisma studio
+  pnpm prisma studio
   ```
 
 ---

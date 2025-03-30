@@ -29,7 +29,7 @@ Before deploying, ensure you have:
 Ensure your application builds successfully:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ### 2. Create a Production Start Command
@@ -56,8 +56,8 @@ Ensure your application handles production environment settings:
 Test your application in production mode before deploying:
 
 ```bash
-npm run build
-NODE_ENV=production npm start
+pnpm run build
+NODE_ENV=production pnpm start
 ```
 
 ## Deployment on Replit
@@ -78,11 +78,11 @@ NODE_ENV=production npm start
 1. In the Repl, click on the "Shell" tab
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 3. Configure the run button by creating a `.replit` file:
    ```
-   run = "npm start"
+   run = "pnpm start"
    ```
 
 Or:
@@ -119,24 +119,24 @@ Or:
 
 1. Open the Shell and run:
    ```bash
-   npx prisma migrate deploy
+   pnpm prisma migrate deploy
    ```
    
 2. Or use the db:push command if defined in your package.json:
    ```bash
-   npm run db:push
+   pnpm run db:push
    ```
 
 ### 6. Build and Start the Application
 
 1. In the Shell, build your application:
    ```bash
-   npm run build
+   pnpm run build
    ```
    
 2. Start your application:
    ```bash
-   npm start
+   pnpm start
    ```
 
 ### 7. Verify Deployment
@@ -185,7 +185,7 @@ Ensure these environment variables are properly set in your production environme
    - Test connection:
    
    ```bash
-   npx prisma db pull
+   pnpm prisma db pull
    ```
 
 3. **Missing environment variables**
@@ -218,7 +218,7 @@ While this guide focuses on Replit, you can deploy this application to other pla
    ```
 5. Run migrations:
    ```bash
-   heroku run npx prisma migrate deploy
+   heroku run pnpm prisma migrate deploy
    ```
 
 ### Render
@@ -226,8 +226,8 @@ While this guide focuses on Replit, you can deploy this application to other pla
 1. Create a Render account
 2. Connect your GitHub repository
 3. Create a new Web Service with:
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm start`
+   - Build Command: `pnpm install && pnpm run build`
+   - Start Command: `pnpm start`
 4. Add a PostgreSQL database from Render's dashboard
 5. Set up environment variables
 
