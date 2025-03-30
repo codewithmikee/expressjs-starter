@@ -12,7 +12,32 @@ services:
     env: node
     plan: starter # Specify your plan (free, starter, etc.)
     branch: main # Specify your deploy branch
-    buildCommand: npm i -g pnpm && pnpm install && pnpm run build
+    buildCommand: >
+      npm i -g pnpm && 
+      pnpm install && 
+      pnpm run build &&
+      echo "Build completed. Checking for client files..." &&
+      ls -la dist/ &&
+      # Check all possible client build locations based on vite.config.ts
+      if [ -d "dist/public" ]; then
+        echo "✅ Client build found at dist/public (vite.config.ts default)";
+      elif [ -d "dist/client" ]; then
+        echo "✅ Client build found at dist/client";
+      elif [ -d "client/dist" ]; then
+        echo "✅ Client build found at client/dist";
+        # Copy to both potential locations to ensure compatibility
+        mkdir -p dist/public
+        cp -r client/dist/* dist/public/
+        mkdir -p dist/client
+        cp -r client/dist/* dist/client/
+      else
+        echo "❌ Client build files not found in expected locations";
+        # Create fallback files in all potential locations
+        mkdir -p dist/public
+        echo "<html><body><h1>Express API Server</h1><p>This is an API server. Frontend files not found during build.</p></body></html>" > dist/public/index.html
+        mkdir -p dist/client
+        echo "<html><body><h1>Express API Server</h1><p>This is an API server. Frontend files not found during build.</p></body></html>" > dist/client/index.html
+      fi
     startCommand: NODE_ENV=production node render-server.cjs
     
     # Configure Auto Deploy

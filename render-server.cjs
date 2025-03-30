@@ -23,7 +23,41 @@ app.set('trust proxy', 1);
 // Root directory setup (avoid '/repo/' paths to ensure portability)
 const rootDir = path.resolve('.');
 const distDir = path.join(rootDir, 'dist');
-const clientDistDir = path.join(distDir, 'client');
+
+// Try multiple possible client build directories based on how Vite might build
+// Based on vite.config.ts, client files should be in dist/public
+const possibleClientDirs = [
+  path.join(distDir, 'public'),    // From vite.config.ts
+  path.join(distDir, 'client'),    // Our modification in render.yaml
+  path.join(rootDir, 'client', 'dist'), // Alternative client location
+  distDir                          // Fallback
+];
+
+let clientDistDir = distDir; // Default fallback
+for (const dir of possibleClientDirs) {
+  if (fs.existsSync(dir)) {
+    // Check if the directory contains index.html or other client files
+    if (fs.existsSync(path.join(dir, 'index.html'))) {
+      clientDistDir = dir;
+      console.log(`[Render Server] Found client files in: ${clientDistDir}`);
+      break;
+    } else {
+      console.log(`[Render Server] Directory exists but no index.html found in: ${dir}`);
+      try {
+        const files = fs.readdirSync(dir);
+        if (files.length > 0) {
+          console.log(`[Render Server] Files in ${dir}:`, files);
+        }
+      } catch (err) {
+        console.error(`[Render Server] Error reading directory ${dir}:`, err.message);
+      }
+    }
+  } else {
+    console.log(`[Render Server] Directory doesn't exist: ${dir}`);
+  }
+}
+
+console.log(`[Render Server] Using client dist directory: ${clientDistDir}`);
 
 // Add request logging
 app.use((req, res, next) => {
@@ -117,7 +151,76 @@ app.get('*', (req, res) => {
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
-    res.status(500).send('Server Error: Client build files not found');
+    // List available directories to help with debugging
+    const availableDirs = [];
+    
+    if (fs.existsSync(distDir)) {
+      availableDirs.push(`${distDir} (exists)`);
+      
+      try {
+        const distContents = fs.readdirSync(distDir);
+        availableDirs.push(`- Contents of ${distDir}: ${distContents.join(', ')}`);
+      } catch (err) {
+        availableDirs.push(`- Error reading ${distDir}: ${err.message}`);
+      }
+    } else {
+      availableDirs.push(`${distDir} (does not exist)`);
+    }
+    
+    if (fs.existsSync(path.join(rootDir, 'client'))) {
+      availableDirs.push(`${path.join(rootDir, 'client')} (exists)`);
+      
+      const clientDistDirAlt = path.join(rootDir, 'client', 'dist');
+      if (fs.existsSync(clientDistDirAlt)) {
+        availableDirs.push(`${clientDistDirAlt} (exists)`);
+        
+        try {
+          const clientDistContents = fs.readdirSync(clientDistDirAlt);
+          availableDirs.push(`- Contents of ${clientDistDirAlt}: ${clientDistContents.join(', ')}`);
+        } catch (err) {
+          availableDirs.push(`- Error reading ${clientDistDirAlt}: ${err.message}`);
+        }
+      } else {
+        availableDirs.push(`${clientDistDirAlt} (does not exist)`);
+      }
+    }
+    
+    console.error('[Render Server] Client build files not found. Available directories:', availableDirs);
+    
+    res.status(500).send(`
+      <html>
+        <head>
+          <title>Server Error</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 650px; margin: 2rem auto; padding: 0 1rem; }
+            h1 { color: #e53e3e; }
+            pre { background: #f7fafc; padding: 1rem; border-radius: 0.25rem; overflow-x: auto; }
+            .note { background: #ebf8ff; padding: 1rem; border-radius: 0.25rem; margin: 1rem 0; }
+          </style>
+        </head>
+        <body>
+          <h1>Server Error: Client Build Files Not Found</h1>
+          <p>The server could not locate the client build files. This typically occurs when the build process didn't complete correctly or the files were not generated in the expected location.</p>
+          
+          <div class="note">
+            <p><strong>Debugging Information:</strong></p>
+            <p>Looking for index.html in: ${indexPath}</p>
+            <p>Current client dist directory: ${clientDistDir}</p>
+          </div>
+          
+          <h2>Available Directories:</h2>
+          <pre>${availableDirs.join('\n')}</pre>
+          
+          <h2>Possible Solutions:</h2>
+          <ul>
+            <li>Verify that the build command in render.yaml is correctly generating the client files</li>
+            <li>Check build logs for any errors during the build process</li>
+            <li>Ensure the Vite configuration is correctly set up to output files to the expected location</li>
+            <li>Try manually running the build process locally to see if it produces the expected files</li>
+          </ul>
+        </body>
+      </html>
+    `);
   }
 });
 

@@ -157,7 +157,14 @@ Ensure your application is optimized for production:
    - Verify that the build process is working correctly
    - Try clearing the build cache and redeploying
 
-4. **Memory issues**:
+4. **"Server Error: Client build files not found"**:
+   - This occurs when the server can't locate the client build files
+   - Check the build logs to see where the files are being generated
+   - Make sure the Vite build is completing successfully
+   - If needed, manually update the buildCommand in render.yaml to copy files to the expected location
+   - The server looks for client files in multiple locations: dist/public, dist/client, and client/dist
+
+5. **Memory issues**:
    - Optimize your application's memory usage
    - Consider upgrading to a higher tier plan with more resources
 
