@@ -1,34 +1,31 @@
-import { createApp } from "./app";
-import config from "./config";
-import { log } from "./utils/logger";
 
-async function startServer() {
-  try {
-    const { app, server } = await createApp();
-    
-    // Start the server
-    server.listen({
-      port: config.server.port,
-      host: config.server.host,
-      reusePort: config.server.reusePort,
-    }, () => {
-      log(`Server running at http://${config.server.host}:${config.server.port}`);
-    });
-    
-    // Handle shutdown gracefully
-    ["SIGINT", "SIGTERM"].forEach((signal) => {
-      process.on(signal, () => {
-        log(`${signal} received. Shutting down gracefully...`);
-        server.close(() => {
-          log("HTTP server closed");
-          process.exit(0);
-        });
-      });
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../../client/dist')));
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+  });
 }
 
-startServer();
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running at http://0.0.0.0:${port}`);
+});
