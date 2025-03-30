@@ -1,11 +1,26 @@
+/**
+ * Authentication Controller
+ * 
+ * @author Mikiyas Birhanu
+ * @description This controller handles all authentication-related operations including
+ * user registration, login, logout, and retrieving the current authenticated user.
+ * It uses Passport.js for authentication and session management.
+ */
+
 import { Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { storage } from "../services/storage.service";
 import { hashPassword } from "../middleware/auth.middleware";
-import { UserStatus, UserRole, insertUserSchema, loginSchema } from "@shared/schema";
+import { UserStatus, UserRole } from "@shared/types";
+import { insertUserSchema, loginSchema } from "@shared/schemas";
 
 /**
  * Handle user registration
+ * 
+ * @param req - Express request object containing registration data
+ * @param res - Express response object
+ * @param next - Express next function for error handling
+ * @returns User data on successful registration or error details
  */
 export async function register(req: Request, res: Response, next: NextFunction) {
   try {
@@ -59,6 +74,11 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 
 /**
  * Handle user login
+ * 
+ * @param req - Express request object containing login credentials
+ * @param res - Express response object
+ * @param next - Express next function for error handling
+ * @returns User data on successful login or error details
  */
 export function login(req: Request, res: Response, next: NextFunction) {
   // Validate request body using the login schema
@@ -93,6 +113,11 @@ export function login(req: Request, res: Response, next: NextFunction) {
 
 /**
  * Handle user logout
+ * 
+ * @param req - Express request object
+ * @param res - Express response object
+ * @param next - Express next function for error handling
+ * @returns Success message on successful logout or error details
  */
 export function logout(req: Request, res: Response, next: NextFunction) {
   req.logout((err) => {
@@ -108,6 +133,10 @@ export function logout(req: Request, res: Response, next: NextFunction) {
 
 /**
  * Get the currently authenticated user
+ * 
+ * @param req - Express request object
+ * @param res - Express response object
+ * @returns User data for the authenticated user or authentication error
  */
 export function getCurrentUser(req: Request, res: Response) {
   if (!req.isAuthenticated()) {

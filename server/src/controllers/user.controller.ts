@@ -1,13 +1,26 @@
+/**
+ * User Controller
+ * 
+ * @author Mikiyas Birhanu
+ * @description This controller handles user-related operations including
+ * retrieving, creating, updating, and deleting users. It uses Prisma ORM
+ * for database operations and Zod for request validation.
+ */
+
 import { Request, Response } from "express";
 import { PrismaClient } from '@prisma/client';
 import { z } from "zod";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema } from "@shared/schemas";
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
 
 /**
  * Get all users
+ * 
+ * @param req - Express request object
+ * @param res - Express response object
+ * @returns Array of all users or error details
  */
 export async function getAllUsers(req: Request, res: Response) {
   try {
@@ -21,6 +34,10 @@ export async function getAllUsers(req: Request, res: Response) {
 
 /**
  * Get user by ID
+ * 
+ * @param req - Express request object with user ID parameter
+ * @param res - Express response object
+ * @returns User object or error details if user not found
  */
 export async function getUserById(req: Request, res: Response) {
   try {
@@ -46,6 +63,10 @@ export async function getUserById(req: Request, res: Response) {
 
 /**
  * Create a new user
+ * 
+ * @param req - Express request object with user data in the body
+ * @param res - Express response object
+ * @returns Newly created user or validation/error details
  */
 export async function createUser(req: Request, res: Response) {
   try {
@@ -84,6 +105,10 @@ export async function createUser(req: Request, res: Response) {
 
 /**
  * Update a user
+ * 
+ * @param req - Express request object with user ID parameter and updated data in the body
+ * @param res - Express response object
+ * @returns Updated user object or validation/error details
  */
 export async function updateUser(req: Request, res: Response) {
   try {
@@ -137,6 +162,10 @@ export async function updateUser(req: Request, res: Response) {
 
 /**
  * Delete a user
+ * 
+ * @param req - Express request object with user ID parameter
+ * @param res - Express response object
+ * @returns Empty response with 204 status code or error details
  */
 export async function deleteUser(req: Request, res: Response) {
   try {
