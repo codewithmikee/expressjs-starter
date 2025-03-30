@@ -30,9 +30,16 @@ if ! command -v git &> /dev/null; then
   exit 1
 fi
 
-if ! command -v npm &> /dev/null; then
-  print_error "npm is not installed. Please install it before continuing."
+# Check for either npm or pnpm
+if ! command -v pnpm &> /dev/null && ! command -v npm &> /dev/null; then
+  print_error "Neither npm nor pnpm is installed. Please install one of them before continuing."
   exit 1
+fi
+
+if command -v pnpm &> /dev/null; then
+  print_status "pnpm is available and will be used for package management."
+else
+  print_status "npm is available and will be used for package management."
 fi
 
 # Make sure we're in the project root
@@ -43,7 +50,14 @@ fi
 
 # Test build to make sure it works locally
 print_status "Testing build process locally..."
-npm run build
+# Use pnpm if available, otherwise fall back to npm
+if command -v pnpm &> /dev/null; then
+  print_status "Using pnpm for build..."
+  pnpm run build
+else
+  print_status "pnpm not found, using npm instead..."
+  npm run build
+fi
 
 if [ $? -ne 0 ]; then
   print_error "Build failed. Please fix the errors before deploying."

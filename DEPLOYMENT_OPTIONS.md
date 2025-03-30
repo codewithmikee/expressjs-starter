@@ -74,6 +74,23 @@ If you encounter issues with deployment:
 4. For Replit-specific issues, refer to the Replit documentation
 5. For Render-specific issues, refer to the Render documentation
 
+## Package Manager Options
+
+This project supports multiple package managers:
+
+- **npm**: The default package manager (used in most deployment scripts)
+- **pnpm**: Fully supported with render.yaml and deploy-render.sh configurations
+- **yarn**: Compatible but requires manual configuration adjustments
+
+### Using pnpm for Render Deployment
+
+The project includes pnpm support for Render deployment. The render.yaml file is configured to:
+1. Install pnpm globally: `npm i -g pnpm`
+2. Use pnpm for installing dependencies: `pnpm install`
+3. Use pnpm for building the project: `pnpm run build`
+
+The deploy-render.sh script automatically detects if pnpm is available and uses it preferentially over npm.
+
 ## Need More Help?
 
 If you need additional assistance with deployment, please:

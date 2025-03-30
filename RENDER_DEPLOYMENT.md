@@ -46,7 +46,7 @@ Before deploying to Render, ensure you have:
    - **Region**: Select the same region as your database
    - **Branch**: Usually `main` or `master`
    - **Runtime**: Select **Node**
-   - **Build Command**: `npm install && npm run build`
+   - **Build Command**: `npm i -g pnpm && pnpm install && pnpm run build`
    - **Start Command**: `NODE_ENV=production node render-server.cjs`
    - **Plan**: Select an appropriate plan
 
@@ -98,7 +98,7 @@ services:
   - type: web
     name: your-app-api
     env: node
-    buildCommand: npm install && npm run build
+    buildCommand: npm i -g pnpm && pnpm install && pnpm run build
     startCommand: NODE_ENV=production node render-server.cjs
     plan: starter
     envVars:
