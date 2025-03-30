@@ -2,7 +2,24 @@
 
 This document provides step-by-step instructions for deploying your Express.js + TypeScript + Prisma application, with a specific focus on deploying to Replit.
 
-> **Important**: This project uses ES Modules (`"type": "module"` in package.json), which requires special handling for deployment. Follow this guide carefully to avoid common ES Module compatibility issues.
+## ⭐ RECOMMENDED DEPLOYMENT METHOD FOR REPLIT ⭐
+
+Due to compatibility issues with TypeScript and ES Modules in the Replit deployment environment, we strongly recommend using our new standalone deployment approach:
+
+```bash
+./deploy-standalone.sh
+```
+
+This script:
+1. Builds the client application
+2. Starts a standalone CommonJS server that:
+   - Doesn't rely on any TypeScript compilation
+   - Includes mock authentication (username: `demo`, password: `password`)
+   - Serves static files from the build directory
+   - Provides all necessary API endpoints
+   - Works reliably in Replit's environment
+
+> **Important**: This project uses ES Modules (`"type": "module"` in package.json), which requires special handling for deployment. Using the standalone script above helps avoid common ES Module compatibility issues.
 
 ## Table of Contents
 
@@ -206,20 +223,21 @@ Or:
    
    **RECOMMENDED APPROACH FOR REPLIT DEPLOYMENT:**
    
-   For the most reliable deployment on Replit, use our minimal CommonJS server with demo authentication:
+   For the most reliable deployment on Replit, use our standalone CommonJS server with demo authentication:
    
    ```bash
-   ./deploy-minimal.sh
+   ./deploy-standalone.sh
    ```
    
-   This starts a server.js file with these features:
+   This starts a standalone-server.cjs file with these features:
    - CommonJS syntax for maximum compatibility
+   - Completely self-contained without TypeScript dependencies
    - Static file serving for the client build
-   - Minimal demo API endpoints that match the frontend expectations
+   - Full API endpoints that match the frontend expectations
    - In-memory authentication with a demo user (username: demo, password: password)
    
-   The demo server provides just enough functionality to demonstrate the application while avoiding all the 
-   complex TypeScript/ES Module issues that can occur during deployment.
+   The standalone server provides the most reliable deployment option while completely avoiding all the 
+   complex TypeScript/ES Module issues that can occur in the Replit environment.
 
 ### 7. Verify Deployment
 
