@@ -7,4 +7,4 @@
  * the modular, well-structured server implementation.
  */
 
-import "./src/index";
+import "./src/index.js";
