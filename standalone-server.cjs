@@ -9,6 +9,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const cors = require('cors');
 
 // Create express app
 const app = express();
@@ -16,6 +17,23 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
+
+// Configure CORS middleware
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow any origin in development
+    // In production, you might want to restrict this to specific domains
+    callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true, // Allow cookies to be sent with requests
+  maxAge: 86400 // Cache preflight requests for 24 hours
+};
+
+// Apply CORS middleware to all routes
+app.use(cors(corsOptions));
+console.log('CORS middleware enabled');
 
 // In-memory users and sessions (for demo purposes only)
 const users = [

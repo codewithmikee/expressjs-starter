@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { createServer, type Server } from "http";
+import cors from "cors";
 import apiRoutes from "./routes";
 import { setupPassport } from "./middleware/auth.middleware";
 import { log } from "./utils/logger";
@@ -10,6 +11,24 @@ import { errorHandlerMiddleware, notFoundMiddleware } from "../../packages/error
 
 export async function createApp(): Promise<{ app: express.Express, server: Server }> {
   const app = express();
+  
+  // Simple CORS middleware implementation
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Max-Age', '86400');
+      res.sendStatus(200);
+    } else {
+      next();
+    }
+  });
+  log("CORS middleware enabled using custom implementation");
+  
+  // Other middleware
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
   app.use(cookieParser());

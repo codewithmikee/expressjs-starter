@@ -13,12 +13,30 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { createServer } = require('http');
+const cors = require('cors');
 
 // Initialize Express app
 const app = express();
 
 // Enable trust proxy for Render's proxy setup
 app.set('trust proxy', 1);
+
+// Configure CORS middleware
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow any origin in development
+    // In production, you might want to restrict this to specific domains
+    callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true, // Allow cookies to be sent with requests
+  maxAge: 86400 // Cache preflight requests for 24 hours
+};
+
+// Apply CORS middleware to all routes
+app.use(cors(corsOptions));
+console.log('[Render Server] CORS middleware enabled');
 
 // Root directory setup (avoid '/repo/' paths to ensure portability)
 const rootDir = path.resolve('.');

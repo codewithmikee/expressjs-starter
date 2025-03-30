@@ -20,6 +20,22 @@ const __dirname = dirname(__filename);
 const app = express();
 const port = parseInt(process.env.PORT || '5000', 10);
 
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Max-Age', '86400');
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
+console.log("CORS middleware enabled");
+
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
