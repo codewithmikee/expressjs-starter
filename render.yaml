@@ -1,0 +1,62 @@
+############################################################
+#                                                          #
+#  Render Configuration File                               #
+#  https://render.com/docs/yaml-spec                       #
+#                                                          #
+############################################################
+
+services:
+  # Main Web Service
+  - type: web
+    name: code-with-mike-backend
+    env: node
+    plan: starter # Specify your plan (free, starter, etc.)
+    branch: main # Specify your deploy branch
+    buildCommand: npm install && npm run build
+    startCommand: NODE_ENV=production node render-server.cjs
+    
+    # Configure Auto Deploy
+    autoDeploy: true
+    
+    # Node.js Version - You can remove this to use the default
+    runtime: node
+    
+    # Configure Health Check
+    healthCheckPath: /health
+    
+    # Environment Variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      
+      - key: PORT
+        value: 3000
+      
+      - key: SESSION_SECRET
+        # Generate a random value in production
+        generateValue: true
+      
+      # Database connection string
+      - key: DATABASE_URL
+        # Connect to the database created below
+        fromDatabase:
+          name: code-with-mike-db
+          property: connectionString
+    
+    # Limit resources (adjust as needed)
+    disk:
+      name: node-app-disk
+      mountPath: /data
+      sizeGB: 1 # Smallest available size
+
+# Database Service
+databases:
+  - name: code-with-mike-db
+    plan: starter # Choose appropriate plan
+    
+    # Database Settings
+    databaseName: codeWithMike
+    user: codeWithMike
+    
+    # IP Allow List (if needed)
+    ipAllowList: [] # Only allow internal connections by default

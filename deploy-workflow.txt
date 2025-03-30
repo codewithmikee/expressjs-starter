@@ -1,0 +1,14 @@
+[[workflows.workflow]]
+name = "Deploy"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./deploy-standalone.sh"
+waitForPort = 3000
